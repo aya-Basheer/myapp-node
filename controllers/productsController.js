@@ -1,5 +1,9 @@
-// controllers/productsController.js
+
+// controllers/productController.js
 const Product = require('../models/productModel');
+const logger = require('../utils/logger');
+
+
 
 
 const getAllProducts = async (req, res) => {
@@ -23,15 +27,24 @@ const getSingleProduct = async (req, res) => {
 };
 
 // Create new product
-const createProduct = async (req, res) => {
+
+exports.createProduct = async (req, res) => {
   try {
-    const product = new Product(req.body);
-    const savedProduct = await product.save();
-    res.status(201).json(savedProduct);
+    const { name, description, price, category } = req.body;
+    const product = new Product({ name, description, price, category, createdBy: req.user.id });
+    await product.save();
+
+    logger.info(`Product created: ${product._id} by ${req.user.email}`);
+
+    // for Phase 3 we'll emit socket event here via req.app.get('io')
+
+    res.status(201).json({ message: 'Product created', product });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    logger.error('Create product error', { error: err });
+    res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // Update product by ID
 const updateProduct = async (req, res) => {
