@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Real-Time Chat</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f1f1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      background: #0078ff;
+      color: white;
+      padding: 10px;
+      margin: 0;
+    }
+    #chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    .message {
+      max-width: 70%;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 12px;
+      position: relative;
+      word-wrap: break-word;
+    }
+    .me {
+      align-self: flex-end;
+      background: #0078ff;
+      color: white;
+      border-bottom-right-radius: 0;
+    }
+    .other {
+      align-self: flex-start;
+      background: #e5e5ea;
+      color: black;
+      border-bottom-left-radius: 0;
+    }
+    .notification {
+      align-self: center;
+      background: #ffeb3b;
+      color: black;
+      font-weight: bold;
+      border-radius: 12px;
+    }
+    .time {
+      font-size: 11px;
+      opacity: 0.7;
+      display: block;
+      margin-top: 5px;
+      text-align: right;
+    }
+    #input-area {
+      display: flex;
+      border-top: 1px solid #ccc;
+      padding: 10px;
+      background: white;
+    }
+    #message {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+    }
+    button {
+      margin-left: 10px;
+      padding: 10px 15px;
+      background: #0078ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005fcc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Real-Time Chat</h1>
+  
+  <div id="chat-container"></div>
+
+  <div id="input-area">
+    <input type="text" id="message" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <script>
+    const socket = io('http://localhost:5000');
+
+    socket.on('connect', () => {
+      console.log('Connected, id:', socket.id);
+    });
+
+    // استقبال رسائل الدردشة العادية
+    socket.on('chatMessage', (msgObj) => {
+      const type = msgObj.id === socket.id ? 'me' : 'other';
+      addMessage(msgObj.message.text, msgObj.message.time, type);
+    });
+
+    // استقبال إشعارات المنتجات الجديدة
+    socket.on('newProduct', (product) => {
+      const text = `🛒 New Product: ${product.name} ($${product.price})`;
+      const time = new Date(product.createdAt).toLocaleTimeString();
+      addMessage(text, time, 'notification'); // عرض الإشعار في منتصف الشاشة
+    });
+
+    function sendMessage() {
+      const input = document.getElementById('message');
+      if (!input.value.trim()) return;
+
+      const msg = { text: input.value, time: new Date().toLocaleTimeString() };
+      socket.emit('chatMessage', msg); // server يبث الرسالة للجميع
+      input.value = '';
+    }
+
+    // دالة عرض الرسالة كفقاعة
+    function addMessage(text, time, type) {
+      const container = document.getElementById('chat-container');
+      const div = document.createElement('div');
+      div.classList.add('message', type);
+
+      div.innerHTML = `
+        ${text}
+        <span class="time">${time}</span>
+      `;
+
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight; // التمرير للأسفل تلقائياً
+    }
+  </script>
+</body>
+</html>

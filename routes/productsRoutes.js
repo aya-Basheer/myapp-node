@@ -7,7 +7,7 @@ const router = express.Router();
 
 // routes/productRoutes.js
 
-const productController = require('../controllers/productController');
+const productController = require('../controllers/productsController');
 const auth = require('../middlewares/authMiddleware');
 const roleCheck = require('../middlewares/roleMiddleware');
 const { productCreateValidator } = require('../middlewares/validators');
